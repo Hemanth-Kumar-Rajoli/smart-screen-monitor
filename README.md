@@ -1,5 +1,5 @@
 # way to execute in windows
-### downloadin... virtual environment
+### downloading... virtual environment
 1. pip install virtualenv
 ### ensuring pip is up to date
 2. python -m pip install -U pip
