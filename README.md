@@ -6,7 +6,9 @@
 ### creating virtual environment with name venv
 3. python -m venv venv
 ### activate virtual environment by running activate script
-4. ./venv/bin/activate
+4. .\venv\Scripts\activate
+### installing required modules or packages
+5. pip install -r requirements.txt
 ### running the source file
-5. python main.py
+6. python .\public\main.py
 
