@@ -1,0 +1,24 @@
+step 1:
+    build basic media player it has operations as follows
+    -> play and pause
+    -> forward and backward
+
+    note: we can mannage sound by system sound rather than coding for that
+step 2:
+    recognition of requirements such as
+    -> face and hand
+
+    note: we need to improve efficency of recognition
+setp 3:
+    recognize hand motions
+    -> five fingers hold ==> pause
+    -> five fingers open with no movement ==> play
+    -> moving hand up ==> raise the system volume
+    -> movin hand down ==> decrease the system volume
+    -> moving hand forward ==> skip part of the video 
+    -> moving hand backward ==> backward part of the video
+
+    note: up to now we just assgin skip/backward to 3 minutes of video up on hand movement
+step 4:
+    synchronize above steps
+
