@@ -3,7 +3,7 @@ import pyautogui
 import time
 import os
 class Controlmedia:
-    vlcp = "C:/Program Files (x86)/VideoLAN/VLC/vlc.exe"
+    vlcp = "C:/Program Files/VideoLAN/VLC/vlc.exe"
     def __init__(self,videoloc):
         self.videoloc = videoloc
     def Checkvlc(self):
@@ -21,34 +21,41 @@ class Controlmedia:
             print("video does not exist or path is invalid for ",name)
     def openvideo(self):
         p = subprocess.Popen([self.vlcp, self.videoloc])
-    def volup(self):
+    @staticmethod
+    def volup():
         pyautogui.press("volumeup")
-    def voldown(self):
+    @staticmethod
+    def voldown():
         pyautogui.press("volumedown")
-    def backward(self):
+    @staticmethod
+    def backward():
         pyautogui.press("left")
-    def forward(self):
+    @staticmethod
+    def forward():
         pyautogui.press("right")
-    def pause(self):
+    @staticmethod
+    def pause():
         pyautogui.press(" ")
-    def play(self):
-        pyautogui.press(" ")
-p1 = Controlmedia("C:\\Users\\AKRAM\\Downloads\\Vikram-Telugu-s5rtu-2022.mp4")
-p1.Checkvlc()
-time.sleep(3)
-p1.Checkvideo()
-time.sleep(3)
-p1.openvideo()
-time.sleep(3)
-p1.volup()
-time.sleep(3)
-p1.voldown()
-time.sleep(3)
-p1.backward()
-time.sleep(3)
-p1.forward()
-time.sleep(3)
-p1.pause()
-time.sleep(3)
-p1.play()
+    @staticmethod
+    def play():
+        pyautogui.press(" ") 
+if __name__ == "__main__":
+    p1 = Controlmedia("D:\\movies\\marvel\\MARVEL\\2.captain marvel.mkv")
+    p1.Checkvlc()
+    time.sleep(3)
+    p1.Checkvideo()
+    time.sleep(3)
+    p1.openvideo()
+    time.sleep(3)
+    p1.volup()
+    time.sleep(3)
+    p1.voldown()
+    time.sleep(3)
+    p1.backward()
+    time.sleep(3)
+    p1.forward()
+    time.sleep(3)
+    p1.pause()
+    time.sleep(3)
+    p1.play()
 
