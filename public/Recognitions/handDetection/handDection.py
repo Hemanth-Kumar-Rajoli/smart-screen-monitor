@@ -10,6 +10,19 @@ class HandDetection:
         self.mp_hands = mp.solutions.hands
         self.video_status = True
         self.cap = cv.VideoCapture(0)
+        self.x_res = 640
+        self.y_res = 480
+        self.COLOR_FOR_CONTROLLS_STATUS = (255,0,102)
+        self.COLOR_FOR_PAUSE_AND_PLAY = (0,0,0)
+        self.COLOR_FOR_VOLUME_CONTROLS = (8,171,177)
+        self.COLOR_FOR_FARWARD_AND_BACKWARD_CONTROLS = (67,3,177)
+
+        self.POSITION_FOR_CONTROLLS_STATUS = (self.x_res-320,self.y_res-50)
+        self.POSITION_FOR_PAUSE_AND_PLAY = (50,50)
+        self.POSITION_FOR_VOLUME_CONTROLS = (self.x_res-350,50)
+        self.POSITION_FOR_FARWARD_AND_BACKWARD_CONTROLS = (self.x_res-200,90)
+        self.activateControlsHelper = 3
+        
     @staticmethod
     def forward():
         Controlmedia.forward()
@@ -28,6 +41,10 @@ class HandDetection:
     @staticmethod
     def volumeDown():
         Controlmedia.voldown()
+    def checkForControlsPause(self,angles):
+        return (all([True if angle >=150 else False for angle in angles[1:3]]) and all([True if angle <=70 else False for angle in angles[3:5]]))
+    def checkForControlsActive(self,angles):
+        return (all([True if angle >=150 else False for angle in angles[1:4]]) and all([True if angle <=70 else False for angle in angles[4:5]]))
     def checkForPause(self,angles,result): #return true if need to pause any video else play
         pointsOfThumb = self.getRequiredPoints([4,2,0],result)
         a = self.angleBetweenThreePoints(pointsOfThumb[0],pointsOfThumb[1],pointsOfThumb[2])
@@ -68,7 +85,7 @@ class HandDetection:
             return 90.0
 
     def getRequiredPoints(self,joints,result):
-        return [(int(result.multi_hand_landmarks[0].landmark[joint].x*640),int(result.multi_hand_landmarks[0].landmark[joint].y*480)) for joint in joints]
+        return [(int(result.multi_hand_landmarks[0].landmark[joint].x*self.x_res),int(result.multi_hand_landmarks[0].landmark[joint].y*self.y_res)) for joint in joints]
     def findAnglesForEveryFinger(self,result):
         finger1 = self.getRequiredPoints([2,3,4],result)
         finger2 = self.getRequiredPoints([5,6,8],result)
@@ -102,42 +119,55 @@ class HandDetection:
         while True:
             _,frame = self.cap.read()
             frame = cv.flip(frame,1)
+            self.x_res = frame.shape[1]
+            self.y_res = frame.shape[0]
             result = self.RecognizeHand(frame)
+            if(self.activateControlsHelper == 3):
+                cv.putText(frame,"controlls are active",self.POSITION_FOR_CONTROLLS_STATUS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_CONTROLLS_STATUS,2)
+            elif(self.activateControlsHelper == 0):
+                cv.putText(frame,"controlls are stoped",self.POSITION_FOR_CONTROLLS_STATUS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_CONTROLLS_STATUS,2)
+
             if result is not None:
                 angles = self.findAnglesForEveryFinger(result)
+                if(self.checkForControlsPause(angles)):
+                        self.activateControlsHelper = 0
 
-                if(self.checkForVolume(angles)):
-                    points = self.getRequiredPoints([4,8],result)
-                    distance = self.distanceBetweenTwoPoints(points[0],points[1])
-                    if(distance>last_distance):
-                        curr_volume+=1
-                        HandDetection.volumeUp()
-                        cv.putText(frame,f'volume : increasing...',(350,50),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,255),1)
-                    elif(distance<last_distance):
-                        curr_volume-=1
-                        HandDetection.volumeDown()
-                        cv.putText(frame,f'volume : decreasing..',(350,50),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,255),1)
-                    last_distance=distance
-                if(self.checkForPause(angles,result)):
-                    if(video_status=='pause' and pauseCount==1):
-                        HandDetection.pause()
-                    pauseCount+=1
-                    playCount=0
-                    video_status = "pause"
-                if(self.checkForPlay(angles,result)):
-                    if(video_status=='play' and playCount == 1):
-                        HandDetection.play()
-                    playCount+=1
-                    pauseCount=0
-                    video_status = 'play'
-                if(self.videoSkipControl(angles,result)):
-                    if(self.whichHand(result)=='LEFT'):
-                        cv.putText(frame,"forwarding...",(0,100),cv.FONT_HERSHEY_SIMPLEX,1,(122,222,0),1)
-                        HandDetection.forward()
-                    else:
-                        cv.putText(frame,"backward...",(0,100),cv.FONT_HERSHEY_SIMPLEX,1,(122,222,0),1)
-                        HandDetection.backward()
-            cv.putText(frame,video_status,(300,100),cv.FONT_HERSHEY_SIMPLEX,1,(0,255,0),1)
+                if(self.checkForControlsActive(angles)):
+                        self.activateControlsHelper = 3
+
+                if(self.activateControlsHelper == 3):
+                    if(self.checkForVolume(angles)):
+                        points = self.getRequiredPoints([4,8],result)
+                        distance = self.distanceBetweenTwoPoints(points[0],points[1])
+                        if(distance>last_distance):
+                            curr_volume+=1
+                            HandDetection.volumeUp()
+                            cv.putText(frame,f'volume : increasing...',self.POSITION_FOR_VOLUME_CONTROLS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_VOLUME_CONTROLS,2)
+                        elif(distance<last_distance):
+                            curr_volume-=1
+                            HandDetection.volumeDown()
+                            cv.putText(frame,f'volume : decreasing..',self.POSITION_FOR_VOLUME_CONTROLS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_VOLUME_CONTROLS,2)
+                        last_distance=distance
+                    if(self.checkForPause(angles,result)):
+                        if(video_status=='pause' and pauseCount==1):
+                            HandDetection.pause()
+                        pauseCount+=1
+                        playCount=0
+                        video_status = "pause"
+                    if(self.checkForPlay(angles,result)):
+                        if(video_status=='play' and playCount == 1):
+                            HandDetection.play()
+                        playCount+=1
+                        pauseCount=0
+                        video_status = 'play'
+                    if(self.videoSkipControl(angles,result)):
+                        if(self.whichHand(result)=='LEFT'):
+                            cv.putText(frame,"forwarding...",self.POSITION_FOR_FARWARD_AND_BACKWARD_CONTROLS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_FARWARD_AND_BACKWARD_CONTROLS,2)
+                            HandDetection.forward()
+                        else:
+                            cv.putText(frame,"backward...",self.POSITION_FOR_FARWARD_AND_BACKWARD_CONTROLS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_FARWARD_AND_BACKWARD_CONTROLS,2)
+                            HandDetection.backward()
+            cv.putText(frame,video_status,self.POSITION_FOR_PAUSE_AND_PLAY,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_PAUSE_AND_PLAY,2)
             
             
             cv.imshow("frame",frame)
