@@ -52,18 +52,28 @@ class HandDetection:
         return (all([True if angle <=50 else False for angle in angles[1:]]) and a<160)
     def checkForPlay(self,angles,result):
         return (all([True if angle >=100 else False for angle in angles[1:]]))
-    def checkForVolume(self,angles): # returns true if firstTwo fingers are opened and last three fingers are closed
+    def checkForVolume(self,angles): # returns true if firstTwo fingers are opened and last three fingers are closed #depricating
         lastThreeClosed = all([True if angle <=70 else False for angle in angles[2:]])
         firstTwoOpened = all([True if angle >=50 else False for angle in angles[:2]])
 
         return lastThreeClosed and firstTwoOpened
-
-    def videoSkipControl(self,angles,result):
+    def checkForOnlyThumbs(self,angles,result):
         pointsOfThumb = self.getRequiredPoints([4,2,0],result)
         a = self.angleBetweenThreePoints(pointsOfThumb[0],pointsOfThumb[1],pointsOfThumb[2])
-
         return (all([True if angle <=50 else False for angle in angles[1:]]) and a>=160)
-
+    def checkForVolumeV2(self,angles,result):
+        #taking any hand
+        thumbTip,littleTip = self.getRequiredPoints([4,20],result)
+        if(self.checkForOnlyThumbs(angles,result) and abs(thumbTip[0]-littleTip[0])<100 and result.multi_handedness[0].classification[0].label.upper()=="RIGHT"):
+            return True
+        return False
+    
+    def videoSkipControl(self,angles,result):
+        #taking any hand
+        thumbTip,littleTip = self.getRequiredPoints([4,20],result)
+        if(self.checkForOnlyThumbs(angles,result) and abs(thumbTip[1]-littleTip[1])<100 ):
+            return True
+        return False
     def distanceBetweenTwoPoints(self,point1,point2):
         return math.sqrt(math.pow(point1[0]-point2[0],2)+math.pow(point1[1]-point2[1],2))
 
@@ -136,18 +146,27 @@ class HandDetection:
                         self.activateControlsHelper = 3
 
                 if(self.activateControlsHelper == 3):
-                    if(self.checkForVolume(angles)):
-                        points = self.getRequiredPoints([4,8],result)
-                        distance = self.distanceBetweenTwoPoints(points[0],points[1])
-                        if(distance>last_distance):
-                            curr_volume+=1
+                    # self.checkForVoumeUp(angles,result)
+                    # if(self.checkForVolume(angles)):
+                    #     points = self.getRequiredPoints([4,8],result)
+                    #     distance = self.distanceBetweenTwoPoints(points[0],points[1])
+                    #     if(distance>last_distance):
+                    #         curr_volume+=1
+                    #         HandDetection.volumeUp()
+                    #         cv.putText(frame,f'volume : increasing...',self.POSITION_FOR_VOLUME_CONTROLS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_VOLUME_CONTROLS,2)
+                    #     elif(distance<last_distance):
+                    #         curr_volume-=1
+                    #         HandDetection.volumeDown()
+                    #         cv.putText(frame,f'volume : decreasing..',self.POSITION_FOR_VOLUME_CONTROLS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_VOLUME_CONTROLS,2)
+                    #     last_distance=distance
+                    if(self.checkForVolumeV2(angles,result)):
+                        thumbTip,littleTip = self.getRequiredPoints([4,20],result)
+                        if(thumbTip[1]<littleTip[1]):
                             HandDetection.volumeUp()
                             cv.putText(frame,f'volume : increasing...',self.POSITION_FOR_VOLUME_CONTROLS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_VOLUME_CONTROLS,2)
-                        elif(distance<last_distance):
-                            curr_volume-=1
+                        else:
                             HandDetection.volumeDown()
                             cv.putText(frame,f'volume : decreasing..',self.POSITION_FOR_VOLUME_CONTROLS,cv.FONT_HERSHEY_SIMPLEX,1,self.COLOR_FOR_VOLUME_CONTROLS,2)
-                        last_distance=distance
                     if(self.checkForPause(angles,result)):
                         if(video_status=='pause' and pauseCount==1):
                             HandDetection.pause()
